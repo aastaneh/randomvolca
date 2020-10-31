@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Make sure amidi is available
+which amidi &> /dev/null
+if [[ "$?" -eq "1" ]]; then
+	echo 'Program `amidi` is missing! Install alsa-utils!'
+  exit 1
+fi
+
+# Get device ID to write to
+DEVICE=$(amidi -l | awk '{if (NR!=1) {print}}' | tail -n1 | awk '{ print $2 }')
+if [[ -z "$DEVICE" ]]; then
+	echo "I can't find a MIDI device. Is it plugged in?"
+	exit 1
+fi
+
+# Download the cart
+CART=/tmp/randomcart-$$.syx
+echo "Generating random DX7 Cart to $CART. If you like what you get, back it up!"
+curl https://generate.thisdx7cartdoesnotexist.com -s -o $CART
+
+if [[ "$?" -eq "1" ]]; then
+  echo "I can't successfully generate a cart. Does https://generate.thisdx7cartdoesnotexist.com work?"
+  exit 1
+fi
+
+echo "Writing to device $DEVICE.."
+amidi -p $DEVICE -s $CART
+echo "Done!"
